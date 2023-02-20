@@ -3,6 +3,7 @@ package com.example.reactive.controller;
 
 import com.example.reactive.entity.Order;
 import com.example.reactive.repository.OrderRepository;
+import com.example.reactive.vo.OrderStatus;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.http.MediaType;
@@ -31,7 +32,14 @@ public class OrderController {
     public Flux<Order> getAllOrders() throws ExecutionException, InterruptedException {
         System.out.println(orderRepository.findAll().collectMap(order -> order).toFuture().get());
         System.out.println(orderRepository.findAll().collectList().toFuture().get());
-        return orderRepository.findAll();
+        return orderRepository
+                .findAll()
+                .map(order -> order)
+                .defaultIfEmpty(Order.of("","",1.1, 1, OrderStatus.REJECTED))
+                .flatMap(orderRepository::save)
+                .doOnNext(order -> {
+                    /// publish event
+                });
     }
 
     @PostMapping("orders")
